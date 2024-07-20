@@ -126,3 +126,5 @@ ipch/
 # ReSharper is a .NET coding add-in
 _ReSharper*/
 *.[Rr]e[Ss]harper
+/vc17/otclient
+/vc17/angle
