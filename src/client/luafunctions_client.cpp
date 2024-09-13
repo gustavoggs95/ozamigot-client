@@ -396,6 +396,7 @@ void Client::registerLuaFunctions()
     g_lua.bindClassMemberFunction<Container>("hasPages", &Container::hasPages);
     g_lua.bindClassMemberFunction<Container>("getSize", &Container::getSize);
     g_lua.bindClassMemberFunction<Container>("getFirstIndex", &Container::getFirstIndex);
+    g_lua.bindClassMemberFunction<Container>("findItemById", &Container::findItemById);
 
     g_lua.registerClass<Thing>();
     g_lua.bindClassMemberFunction<Thing>("setId", &Thing::setId);
