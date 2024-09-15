@@ -36,6 +36,9 @@
 #include <zlib.h>
 
 #include <framework/util/stats.h>
+#include <boost/interprocess/sync/file_lock.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 Minimap g_minimap;
 
@@ -318,6 +321,19 @@ void Minimap::saveImage(const std::string& fileName, const Rect& mapRect)
 bool Minimap::loadOtmm(const std::string& fileName)
 {
     try {
+        boost::filesystem::path filePath(fileName);
+        if (!boost::filesystem::exists(filePath)) {
+            stdext::throw_exception("file does not exist");
+        }
+
+        boost::interprocess::file_lock f_lock(fileName.c_str());
+        // try to lock for 10 seconds
+        boost::posix_time::ptime timeout = boost::posix_time::microsec_clock::universal_time() + boost::posix_time::seconds(10);
+
+        if (!f_lock.timed_lock_sharable(timeout)) {
+            stdext::throw_exception("unable to acquire tomm file read lock within 10 seconds");
+        }
+
         FileStreamPtr fin = g_resources.openFile(fileName, g_game.getFeature(Otc::GameDontCacheFiles));
         if(!fin)
             stdext::throw_exception("unable to open file");
@@ -369,6 +385,7 @@ bool Minimap::loadOtmm(const std::string& fileName)
         }
 
         fin->close();
+        f_lock.unlock();  // Explicitly unlock the file lock (optional, as it will unlock when it goes out of scope)
         return true;
     } catch(stdext::exception& e) {
         g_logger.error(stdext::format("failed to load OTMM minimap: %s", e.what()));
@@ -389,6 +406,13 @@ void Minimap::saveOtmm(const std::string& fileName)
         FileStreamPtr fin = g_resources.createFile(fileName);
 #endif
 
+        boost::interprocess::file_lock f_lock(fileName.c_str());
+        boost::posix_time::ptime timeout = boost::posix_time::microsec_clock::universal_time() + boost::posix_time::seconds(10);
+        if (!f_lock.timed_lock(timeout)) {
+            stdext::throw_exception("unable to acquire OTMM file write lock within 10 seconds");
+        }
+
+        
         //TODO: compression flag with zlib
         uint32 flags = 0;
 
@@ -438,8 +462,9 @@ void Minimap::saveOtmm(const std::string& fileName)
         fin->addU8(invalidPos.z);
 
         fin->flush();
-
         fin->close();
+        f_lock.unlock();
+
 #ifndef ANDROID
         std::filesystem::path filePath(g_resources.getWriteDir()), tmpFilePath(g_resources.getWriteDir());
         filePath += fileName;
@@ -448,9 +473,12 @@ void Minimap::saveOtmm(const std::string& fileName)
             std::filesystem::rename(tmpFilePath, filePath);
         }
 #endif
+
+
     } catch (stdext::exception& e) {
         g_logger.error(stdext::format("failed to save OTMM minimap: %s", e.what()));
     } catch (std::exception& e) {
         g_logger.error(stdext::format("failed to save OTMM minimap: %s", e.what()));
     }
 }
+
