@@ -1146,3 +1146,13 @@ void ResourceManager::unmountMemoryData()
     m_loadedFromMemory = false;
     m_loadedFromArchive = false;
 }
+
+
+std::string ResourceManager::getRealDir(const std::string& path)
+{
+    std::string dir;
+    const char *cdir = PHYSFS_getRealDir(resolvePath(path).c_str());
+    if(cdir)
+        dir = cdir;
+    return dir;
+}
