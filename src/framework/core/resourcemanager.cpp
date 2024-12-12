@@ -398,15 +398,21 @@ std::string ResourceManager::readFileContents(const std::string& fileName, bool 
         return buffer;
     }
 
+#ifdef WITH_ENCRYPTION
     // skip decryption for bot configs
     if (fullPath.find("/bot/") != std::string::npos) {
         return buffer;
     }
+#endif
 
     static std::string unencryptedExtensions[] = { ".otml", ".otmm", ".dmp", ".log", ".txt", ".dll", ".exe", ".zip" };
 
     if (!decryptBuffer(buffer)) {
-        bool ignore = (m_customEncryption == 0);
+#ifdef WITH_ENCRYPTION
+        bool ignore = true;
+#else
+        bool ignore = false;
+#endif
         for (auto& it : unencryptedExtensions) {
             if (fileName.find(it) == fileName.size() - it.size()) {
                 ignore = true;
@@ -979,11 +985,7 @@ void ResourceManager::encrypt(const std::string& seed) {
         for(auto&& entry : std::filesystem::recursive_directory_iterator(std::filesystem::path(dir))) {
             if (!std::filesystem::is_regular_file(entry.path()))
                 continue;
-            std::string str(entry.path().string());
-            // skip encryption for bot configs
-            if (str.find("game_bot") != std::string::npos && str.find("default_config") != std::string::npos) {
-                continue;
-            }
+
             toEncrypt.push(entry.path());
         }
     }

@@ -479,7 +479,13 @@ int Crypt::rsaGetSize()
 #define MX (((z>>5^y<<2) + (y>>3^z<<4)) ^ ((sum^y) + (key[(p&3)^e] ^ z)))
 #ifdef WITH_ENCRYPTION
 void Crypt::bencrypt(uint8_t* buffer, int len, uint64_t k) {
-    uint32_t const key[4] = { (uint32_t)(k >> 32), (uint32_t)(k & 0xFFFFFFFF), 0xDEADDEAD, 0xB00BEEEF };
+// replace "0xABCD1234" with your unique encryption/decryption key values in 2 places in this file (bencrypt/bdecrypt)
+    uint32_t const key[4] = {
+        (uint32_t)((k >> 32) & 0xABCD1234),
+        (uint32_t)(k & 0xABCD1234),
+        (uint32_t)(k & 0xABCD1234),
+        (uint32_t)(k & 0xABCD1234)
+    };
     uint32_t y, z, sum;
     uint32_t *v = (uint32_t*)buffer;
     unsigned rounds, e;
@@ -503,7 +509,13 @@ void Crypt::bencrypt(uint8_t* buffer, int len, uint64_t k) {
 #endif
 
 void Crypt::bdecrypt(uint8_t* buffer, int len, uint64_t k) {
-    uint32_t const key[4] = { (uint32_t)(k >> 32), (uint32_t)(k & 0xFFFFFFFF), 0xDEADDEAD, 0xB00BEEEF };
+// replace "0xABCD1234" with your unique encryption/decryption key values in 2 places in this file (bencrypt/bdecrypt)
+    uint32_t const key[4] = {
+        (uint32_t)((k >> 32) & 0xABCD1234),
+        (uint32_t)(k & 0xABCD1234),
+        (uint32_t)(k & 0xABCD1234),
+        (uint32_t)(k & 0xABCD1234)
+    };
     uint32_t y, z, sum;
     uint32_t *v = (uint32_t*)buffer;
     unsigned p, rounds, e;
